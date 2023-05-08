@@ -1,0 +1,53 @@
+<script>
+	// <![CDATA[
+	(() => {
+		let elemen = document.querySelector('.widget.Blog')
+		elemen.innerHTML = elemen.innerHTML.replace(/\[link&nbsp;/g, '[link ')
+
+		let list_link = []
+		const cocok = elemen.innerHTML.match(/\[link \S+\]/g)
+
+		const banyak_link = cocok ? cocok.length : 0
+		let link_didapat = 0
+
+		for (let x of cocok){
+			list_link = [...list_link, {
+				link: x.replace('[link ', '').replace(']', '')
+			}]
+		}
+
+		const anti_cors = 'https://scrappy-php.herokuapp.com/?url='
+		for (let n in list_link){
+			async function dapatkan(){
+				let isi_situs = await fetch(`${anti_cors}${encodeURIComponent(list_link[n].link)}`)
+				isi_situs = await isi_situs.text()
+
+				const parser = new DOMParser
+				const dom = parser.parseFromString(isi_situs, 'text/html')
+
+				if (isi_situs){
+					link_didapat++
+					list_link[n].judul = dom.title ?? 'Flacz | Vepsio'
+					list_link[n].deskripsi = dom.querySelector('meta[name="description"]').content ?? 'Bienvenido a mi página'
+					list_link[n].gambar = dom.querySelector('meta[property="og:image"]').content ?? 'https://cdn.discordapp.com/attachments/747472529328701612/1104930273075937310/hh.png'
+					if (link_didapat == banyak_link){
+						elemen.innerHTML = elemen.innerHTML.replace(/\[link (\S+)\]/g, function(x, a){
+							let z = list_link.filter(x => x.link == a)[0]
+							return `
+								<a href="${z.link}" class="preview-link">
+									<img src="${anti_cors}${encodeURIComponent(z.gambar)}" alt="${z.judul}" />
+									<span class="keterangan">
+										<span class="judul">${z.judul}</span>
+										<span class="deskripsi">${z.deskripsi}</span>
+									</span>
+								</a>
+							`
+						})				
+					}
+				}
+			}
+			dapatkan()
+		}
+	})()
+	// ]]>
+</script>
